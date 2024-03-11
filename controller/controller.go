@@ -53,21 +53,24 @@ func Singup(w http.ResponseWriter, r *http.Request) {
 
 	_ = json.NewDecoder(r.Body).Decode(&user)
 	count, err := Collection.CountDocuments(context.Background(), bson.M{"email": user.Email})
-	// count, err := Collection.CountDocuments(context.Background(), bson.M{"email": user.Email})
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	if count != 0 {
-		fmt.Println("this email is used allready ")
+		http.Error(w, "This email is already in use", http.StatusBadRequest)
 		return
 	}
 	num, err := Collection.CountDocuments(context.Background(), bson.M{"phone": user.Phone})
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 	if num != 0 {
-		fmt.Println("this number is use to make a new id ")
+		http.Error(w, "This phone number is already in use", http.StatusBadRequest)
+		return
 	}
 
 	password := Hashpassword(user.Password)
@@ -76,6 +79,7 @@ func Singup(w http.ResponseWriter, r *http.Request) {
 	insertoneuser(user)
 	json.NewEncoder(w).Encode(user)
 }
+
 func Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json-x-www-from-urlencode")
 	w.Header().Set("Allow-Control-Allow-Methods", "POST")
